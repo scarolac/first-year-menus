@@ -1,0 +1,10 @@
+lecture  21
+university  35
+education  15
+school  99
+kindergarten  105
+river  5
+city  10
+capital  70
+software  88
+hardware  43

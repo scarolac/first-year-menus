@@ -1,0 +1,117 @@
+// Student: Chris Scarola
+// FILE: queue3.template
+// TEMPLATE CLASS IMPLEMENTED: Queue<Item> (see queue3.h for documentation)
+// This file is included in the header file, and not compiled separately.
+// INVARIANT for the Queue class:
+//   1. The number of items in the queue is stored in the member variable
+//      count.
+//   2. The items in the queue are stored in a linked list, with
+//      the rear of the queue stored at the final node.
+//   3. For a non-empty queue, the member variable rear_ptr is the
+//      tail pointer of the linked list; for an empty list, rear_ptr = NULL
+
+#include "node2.h"
+
+//Constructors + Destructor
+template <class Item>
+queue<Item>::queue() : count (0), rear_ptr(NULL)
+{
+    //intentionally blank
+}
+
+template <class Item>
+queue<Item>::queue(const queue<Item>& source)
+{
+    count = source.count;
+    copy_list(source.rear_ptr, rear_ptr);
+}
+
+template <class Item>
+queue<Item>::~queue()
+{
+    list_clear(rear_ptr);
+    rear_ptr = NULL;
+}
+
+//Modification member functions
+template <class Item>
+void queue<Item>::operator =(const queue<Item>& source)
+{
+    if (this == &source) return; //handle self assignment
+
+    list_clear(rear_ptr);
+    copy_list(source.rear_ptr, rear_ptr);
+    count = source.count;
+}
+
+template <class Item>
+void queue<Item>::pop()
+{
+    if(!empty())
+        {
+            main_savitch_6B::node<Item>* temp_ptr = rear_ptr->link(); //point to "front"
+            
+            if(count > 1) rear_ptr->set_link(temp_ptr->link()); //point to beyond front
+            else rear_ptr = NULL;  //if only 1 item, make rear null since the one item will be deleted
+            
+            list_head_remove(temp_ptr);      //remove the "front"
+            --count;
+        }
+}
+
+template <class Item>
+void queue<Item>::push(const Item& entry)
+{
+    if(empty())
+        {
+            list_head_insert(rear_ptr, entry);
+            rear_ptr->set_link(rear_ptr);
+        }
+    else
+        {
+            list_insert(rear_ptr, entry);
+            rear_ptr = rear_ptr->link();
+        }
+    ++count;
+}
+
+//Constant member functions
+template <class Item>
+Item queue<Item>::front() const
+{
+    if(!empty()) 
+	{
+            return rear_ptr->link()->data(); //get the data of "front"
+	}
+}
+
+//Private functions
+template <class Item>
+void queue<Item>::clear_list(main_savitch_6B::node<Item>*& rear_ptr)
+{
+    while(rear_ptr != NULL)
+        pop();    
+}
+
+template <class Item>
+void queue<Item>::copy_list(main_savitch_6B::node<Item>* source_ptr,
+                            main_savitch_6B::node<Item>*& rear_ptr)
+{
+    if(source_ptr == NULL) return;
+
+    main_savitch_6B::node<Item>* temp_ptr = source_ptr; //use temp to store first item
+
+    list_head_insert(rear_ptr, source_ptr->data()); //insert the rear item
+    rear_ptr->set_link(rear_ptr);                   //tell rear to point to itself since only one item
+    
+    source_ptr = source_ptr->link();                //go to next item for the loop
+    while(source_ptr != temp_ptr)                   //while not the temp "first item"
+        {
+            list_insert(rear_ptr, source_ptr->data()); //insert with the data and move rear_ptr
+            rear_ptr = rear_ptr->link();               //point to next item
+            source_ptr = source_ptr->link();           //go to next item for the loop
+        }
+    
+    //after last iteration rear will be at rear - 1, so point to actual rear
+    rear_ptr = rear_ptr->link();    
+}

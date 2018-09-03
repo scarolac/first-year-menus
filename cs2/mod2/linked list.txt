@@ -1,0 +1,19 @@
+insert:
+
+head of list
+
+//create a new node with entry, that points where the head_ptr is pointing, then set the head_ptr = new node
+head_ptr = new node<T>(entry,head_ptr->link())
+cursor = head_ptr;
+
+
+not on list
+head_ptr = new node<T>(entry,head_ptr->link())
+cursor = head_ptr;
+precursor = NULL;
+
+anywhere of list
+//make node, point to next item, have cursor item point to new node
+cursor->set_link(new node<T>(entry,cursor->link()))
+precursor = cursor;
+cursor = cursor->link();

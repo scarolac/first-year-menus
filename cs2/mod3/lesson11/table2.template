@@ -1,0 +1,161 @@
+// Section CSC161 - Computer Science II: C++
+// File Name: table2.template
+// Student: Chris Scarola
+// Homework Number: 11
+// Last Changed: 4/23/2017
+// IMPLEMENTS: The functions of the table template class (see table2.h for documentation)
+//
+// INVARIANT for the table class:
+// 1. The number of records in the table is in the member variable total_records.
+// 2. The actual records of the table are stored in the array data using a linked list, with no maximum
+// entries. Each index of the data array is the head pointer to the linked list containting keys that
+// hash to the same location.
+
+#include <cassert> // Provides assert
+#include <cstdlib> // Provides size_t
+
+namespace main_savitch_12B
+{
+    // MEMBER CONSTANTS
+    template <class RecordType>
+    const std::size_t Table<RecordType>::TABLE_SIZE;
+
+    // CONSTRUCTORS and DESTRUCTOR
+    template <class RecordType>
+    Table<RecordType>::Table() : total_records(0)
+    {
+        //set all lists to null
+        for(size_t i = 0; i < TABLE_SIZE; ++i)
+            data[i] = NULL;
+    }
+
+    //Copy constructor
+    template <class RecordType>
+    Table<RecordType>::Table(const Table& source)
+    {
+        //used as tail_ptr in each index
+        main_savitch_6B::node<RecordType> *cursor;
+
+        //clear any data, copy each item over
+        for(size_t i = 0; i < TABLE_SIZE; ++i)
+        {
+            list_clear(data[i]);  //clear each linked list at every data index
+            list_copy(source.data[i], data[i], cursor); //copy each list
+        }
+
+        //set the sizes to match
+        total_records = source.total_records;
+    }
+
+    //Destructor
+    template <class RecordType>
+    Table<RecordType>::~Table()
+    {
+        //destroy each list
+        for(size_t i = 0; i < TABLE_SIZE; ++i)
+            if(data[i] != NULL) list_clear(data[i]);
+
+        //reset total_records
+        total_records = 0;
+    }
+
+    // MODIFICATION MEMBER FUNCTIONS
+    // Assignment operator
+    template <class RecordType>
+    void Table<RecordType>::operator =(const Table& source)
+    {
+        //handle self assignment
+        if(this == &source) return;
+
+        //used as tail_ptr in each index
+        main_savitch_6B::node<RecordType> *cursor;
+
+        //clear any data, copy each item over
+        for(size_t i = 0; i < TABLE_SIZE; ++i)
+        {
+            list_clear(data[i]);  //clear each linked list at every data index
+            list_copy(source.data[i], data[i], cursor); //copy each list
+        }
+
+        //set the sizes to match
+        total_records = source.total_records;
+    }
+
+    template <class RecordType>
+    void Table<RecordType>::insert(const RecordType& entry)
+    {
+        //find the node to add
+        main_savitch_6B::node<RecordType> *cursor = find_node(entry.key);
+
+        //if it does not exist, add it, else overrwrite it
+        if(cursor == NULL)
+        {
+            list_head_insert(data[hash(entry.key)], entry);
+            ++total_records;
+        }
+        else
+            cursor->set_data(entry);
+    }
+
+    template <class RecordType>
+    void Table<RecordType>::remove(int key)
+    {
+        //find the node to remove
+        main_savitch_6B::node<RecordType> *cursor = find_node(key);
+
+        if(cursor == NULL) return;
+        else
+        {
+            cursor->set_data(data[hash(key)]->data()); //overwrite the data with the head cursor data
+            list_head_remove(data[hash(key)]);         //remove the duplicate head
+            --total_records;
+        }
+    }
+
+    // CONSTANT MEMBER FUNCTIONS
+    template <class RecordType>
+    void Table<RecordType>::find(int key, bool& found, RecordType& result) const
+    {
+        found = is_present(key);
+        if(found) result = find_node(key)->data();
+    }
+
+    template <class RecordType>
+    bool Table<RecordType>::is_present(int key) const
+    {
+        //find the node, check matching against key
+        //if it matches key it will be true, else false
+        if(find_node(key) == NULL) return false;
+        else
+            return (find_node(key)->data().key == key);
+    }
+
+    // HELPER MEMBER FUNCTIONS
+    template <class RecordType>
+    inline std::size_t Table<RecordType>::hash(int key) const
+    {
+        return (key % TABLE_SIZE);
+    }
+
+    template <class RecordType>
+    main_savitch_6B::node<RecordType>* Table<RecordType>::find_node(int key) const
+    // Precondition: none.
+    // Postcondition: If there is a node in the Table with the specified
+    // key, then the return value is a pointer to this node. Otherwise the
+    // return value is NULL.
+    {
+        main_savitch_6B::node<RecordType> *cursor;
+
+        //point to the head pointer of a list at a given data location
+        cursor = data[hash(key)];
+        while(cursor != NULL)
+        {
+            if(cursor->data().key == key)  //if cursor has the key, return this cursor
+                return cursor;
+            else                           //otherwise go to the next cursor
+                cursor = cursor->link();
+        }
+
+        return cursor;                     //if cursor was null/reaches the end, return it
+    }
+}
